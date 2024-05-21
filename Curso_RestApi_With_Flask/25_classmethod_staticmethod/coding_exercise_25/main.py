@@ -28,6 +28,7 @@ class Store:
         # Return a string representing the argument
         # It should be in the format 'NAME, total stock price: TOTAL'
         return f"{store.name}, total stock price: {int(store.stock_price())}"
+        # otra forma de imprimirlo: return "{}, total stock price: {}".format(store.name, int(store.stock_price()))
     
 store = Store("Test")
 print(Store.franchise(store))
