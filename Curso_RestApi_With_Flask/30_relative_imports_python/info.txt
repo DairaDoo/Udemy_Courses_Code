@@ -1,0 +1,5 @@
+Se trata de traer importaciones de otra forma
+como de la libreria padre usando la sintaxis
+como import from ..lib etc... 
+
+Se recomienda no utilizar ya que es confuso. 
