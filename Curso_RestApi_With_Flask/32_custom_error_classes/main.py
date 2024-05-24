@@ -1,0 +1,33 @@
+#así creamos nuestro error customizado, solo es el nombre, ya que se esta heredando
+#del ValueError, si no se hereda no se podrá hacer lo del raise Error ya que eso
+#pertenece a algunos metodos que tienen las excepciones. 
+class TooManyPagesReadError(ValueError):
+    pass
+
+class Book:
+    def __init__(self, name: str, page_count: str):
+        self.name = name
+        self.page_count = page_count
+        self.pages_read = 0 
+        
+    def __repr__(self):
+        return (
+            f"Book {self.name}, read {self.pages_read} pages out of {self.page_count}"
+        )
+        
+    def read(self, pages: int):
+        if self.pages_read + pages > self.page_count:
+            raise TooManyPagesReadError (
+                f"You tried to read {self.pages_read + pages} pages, but this book only has {self.page_count} pages."
+            )
+        self.pages_read += pages 
+        print(f"You have now read {self.pages_read} pages out of {self.page_count}.")
+        
+python101 = Book("Python 101", 50)
+
+try:
+    python101.read(35)
+    python101.read(50)
+    
+except TooManyPagesReadError as e: # esto se usa para un mensaje más orientado al usuario que al developer.
+    print(e)
