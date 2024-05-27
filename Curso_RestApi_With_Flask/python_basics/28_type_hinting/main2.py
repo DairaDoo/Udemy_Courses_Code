@@ -19,4 +19,6 @@ class Book:
         return cls(name, cls.TYPES[1], page_weight)
     
 book1 = Book.hardcover("Harry Potter", 1500)
+book2 = Book.paperback("gokuBook", 500)
 print(book1)
+print(book2)
