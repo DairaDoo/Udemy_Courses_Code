@@ -1,0 +1,129 @@
+from flask import Flask, request # el request es el que se usa para recibir las solicitudes Post y recibi el json.
+import uuid
+from flask_smorest import abort
+#importamos las variables items y stores que simulan la base de datos.
+from db import items, stores
+
+
+app = Flask(__name__)
+
+
+# json definition: json is a string of text (not a python dictionary!)
+# flask converts the dictionary into json (using stringify).
+
+# GET: http://127.0.0.1:5000/store
+@app.get("/store")
+def get_stores():
+    return {"stores: " : list(stores.values())}
+
+
+# POST: http://127.0.0.1:5000/store
+@app.post("/store")
+def create_store():
+    store_data = request.get_json()
+    if "name" not in store_data:
+        abort(
+            400,
+            message = "Bad request. Ensure 'name' is included in the JSON payload."
+        )
+    
+    for store in stores.values():
+        if store_data["name"] == store["name"]:
+            abort(400, message = f"Store already exists.")
+    
+    store_id = uuid.uuid4().hex # f01010920920 < crea un id como si fuera aleatorio (otra forma real seria con el AUTOINCREMENT)
+    store = {**store_data,"id" : store_id}
+    stores[store_id] = store
+    return store, 201
+
+# POST: http://127.0.0.1:5000/item
+@app.post("/item") # aquí configuramos la ruta para recibir data en la url, (url semgent, Query String).
+def create_item():
+    item_data = request.get_json()
+    if (
+        "price" not in item_data
+        or "store_id" not in item_data
+        or "name" not in item_data
+    ):
+    
+        abort(
+            400,
+            message = "Bad request. Ensure 'price', 'store_id' and 'name' are included in the JSON payload.'"
+        )
+        
+    for item in items.values():
+        if (
+            item_data["name"] == item["name"]
+            and item_data["store_id"] == item["store_id"]
+        ):
+            abort(400, message = "Item already exists.")
+        
+        
+    if item_data["store_id"] not in stores:
+        abort(404, message = "Store not found!")
+    
+    item_id = uuid.uuid4().hex
+    item = {**item_data, "id" : item_id}
+    items[item_id] = item
+    
+    return item, 201
+
+#  http://127.0.0.1:5000/item
+@app.get("/item")
+def get_all_items():
+    return {"items" : list(items.values())}
+
+# http://127.0.0.1:5000/store/<string:store_id>
+@app.get("/store/<string:store_id>") # el request.json solo se usa si hay un body en donde se enviarán datos.
+def get_specific_store_info(store_id):
+    try:
+        return stores[store_id]
+    except KeyError:
+        abort(404, message = "Store not found!") 
+        
+    
+# http://127.0.0.1:5000/item/<string:item_id>")
+@app.get("/item/<string:item_id>")
+def get_item(item_id):
+    try:
+        return items[item_id]
+    except KeyError:
+        abort(404, message = "Item not found!")
+
+
+# http://127.0.0.1:5000/item/--- aquí va el id que generas al crear el item.
+@app.delete("/item/<string:item_id>")
+def delete_item(item_id):
+    try:
+        del items[item_id]
+        return {"message": f"Item with id {item_id} deleted"}
+    except KeyError:
+        abort(404, message = f"Item with id {item_id} not found.")
+        
+# http://127.0.0.1:5000/item/ITEM_ID
+@app.put("/item/<string:item_id>")
+def update_item(item_id):
+    item_data = request.get_json()
+    if "price" not in item_data or "name" not in item_data:
+        abort(400, message = "Bad request. Ensure 'price', and 'name' are included in the JSON payload.")
+    
+    try:
+        item = items[item_id]
+        item |= item_data
+        
+        return item
+    
+    except KeyError:
+        abort(404, message = "Item not found.")
+        
+# http://127.0.0.1:5000/store/STORE_ID
+@app.delete("/store/<string:store_id>")
+def delete_store(store_id):
+    try:
+        del stores[store_id]
+        return {"message": f"Store with id {stores} deleted."}
+    
+    except KeyError:
+        abort(404, message = f"Store with id {store_id} not found.")
+    
+    

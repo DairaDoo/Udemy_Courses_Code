@@ -1,0 +1,80 @@
+from flask import Flask, request # el request es el que se usa para recibir las solicitudes Post y recibi el json.
+
+app = Flask(__name__)
+
+
+# json definition: json is a string of text (not a python dictionary!)
+# flask converts the dictionary into json (using stringify).
+
+stores = [
+    {
+        "name": "My Store",
+        "items": [
+            {
+                "name": "Chair",
+                "price": 15.99
+            }
+        ]
+    }
+]
+
+# GET: http://127.0.0.1:5000/store
+@app.get("/store")
+def get_stores():
+    """RETURNS ALL STORES DATA"""
+    return {"stores: " : stores}
+
+
+# POST: http://127.0.0.1:5000/store
+@app.post("/store")
+def create_store():
+    """CREATES A NEW STORE RECEIVED FROM THE USER"""
+    request_data = request.get_json() # el request recibe la data y la convierte en un diccionario de python.
+    new_store = {
+        "name": request_data["name"],
+        "items": []
+    }
+    
+    stores.append(new_store)
+    return new_store, 201 
+    
+
+# POST: http://127.0.0.1:5000/store/My Store 2/item
+@app.post("/store/<string:name>/item") # aquí configuramos la ruta para recibir data en la url, (url semgent, Query String).
+def create_item(name):
+    """CREATES AN ITEM FOR A ALREADY EXISTING STORE"""
+    request_data = request.get_json()
+    for store in stores:
+        if store["name"] == name:
+            new_item = {
+                "name": request_data["name"],
+                "price": request_data["price"]
+            }
+            store["items"].append(new_item)
+            return new_item, 201
+    return {"message": "Store not found"}, 404
+
+
+# http://127.0.0.1:5000/store/My Store
+@app.get("/store/<string:name>") # el request.json solo se usa si hay un body en donde se enviarán datos.
+def get_specific_store_info(name):
+    """FIND A SPECIFIC STORE BY RECEIVING IS NAME FROM THE URL"""
+    for store in stores:
+        if store["name"] == name:
+            return store
+    return {"message": "Store not found!"}, 404
+
+
+# http://127.0.0.1:5000/store/My Store/item
+@app.get("/store/<string:name>/item")
+def get_item_in_store(name):
+    """FFIND A SPECIFIC STORE ITEM BY RECEIVING THE STORE NAME FROM THE URL"""
+    for store in stores:
+        if store["name"] == name:
+            return {"items": store["items"]}
+        
+    return {"message": "Store not found"}, 404
+
+
+
+    

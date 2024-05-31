@@ -1,21 +1,22 @@
 from flask import Flask
+from flask_smorest import Api
+
+#importamos los blue print con las rutas que creamos resources donde están las rutas.
+from resources.item import blp as ItemBluePrint
+from resources.store import blp as StoreBluePrint
 
 app = Flask(__name__)
 
-
-stores = [
-    {
-        "name": "My Store",
-        "items": [
-            {
-                "name": "Chair",
-                "price": 15.99
-            }
-        ]
-    }
-]
+app.config["PROPAGATE_EXCEPTIONS"] = True
+app.config["API_TITLE"] = "Stores REST API"
+app.config["API_VERSION"] = "v1"
+app.config["OPENAPI_VERSION"] = "3.12.3"
+app.config["OPENAPI_URL_PREFIX"] = "/"
+app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
+app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
 
 
-@app.get("/store") # http://127.0.0.1:5000/store
-def get_stores():
-    return {"stores: " : stores}
+api = Api(app)
+
+api.register_blueprint(ItemBluePrint)
+api.register_blueprint(StoreBluePrint)
