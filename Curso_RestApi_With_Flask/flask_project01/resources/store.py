@@ -3,46 +3,48 @@ from flask import request
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from db import stores
+from schemas import StoreSchema
 
-blp = Blueprint("stores", __name__, description = "Operations on stores.")
+
+blp = Blueprint("Stores", "stores", description="Operations on stores")
+
 
 @blp.route("/store/<string:store_id>")
 class Store(MethodView):
+    @blp.response(200, StoreSchema)
     def get(self, store_id):
         try:
+            # You presumably would want to include the store's items here too
+            # More on that when we look at databases
             return stores[store_id]
         except KeyError:
-            abort(404, message = "Store not found!") 
-    
+            abort(404, message="Store not found.")
+
     def delete(self, store_id):
         try:
             del stores[store_id]
-            return {"message": f"Store with id {stores} deleted."}
-    
+            return {"message": "Store deleted."}
         except KeyError:
-            abort(404, message = f"Store with id {store_id} not found.")
-            
-blp.route("/store")
+            abort(404, message="Store not found.")
+
+
+@blp.route("/store")
 class StoreList(MethodView):
+    @blp.response(200, StoreSchema(many=True))
     def get(self):
-        return {"stores: " : list(stores.values())}
-    
-    def post(self):
-        store_data = request.get_json()
-        if "name" not in store_data:
-            abort(
-                400,
-                message = "Bad request. Ensure 'name' is included in the JSON payload."
-            )
-        
+        return stores.values() # ahora devuelve una lista de tiendas. 
+
+    @blp.arguments(StoreSchema)
+    @blp.response(201, StoreSchema)
+    def post(self, store_data):
         for store in stores.values():
             if store_data["name"] == store["name"]:
-                abort(400, message = f"Store already exists.")
-        
-        store_id = uuid.uuid4().hex # f01010920920 < crea un id como si fuera aleatorio (otra forma real seria con el AUTOINCREMENT)
-        store = {**store_data,"id" : store_id}
+                abort(400, message=f"Store already exists.")
+
+        store_id = uuid.uuid4().hex
+        store = {**store_data, "id": store_id}
         stores[store_id] = store
-        
-        return store, 201
+
+        return store
     
-    
+# marshmallow puede convertir un objeto en json y un diccionario en json.
