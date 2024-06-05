@@ -9,3 +9,5 @@ class StoreModel(db.Model):
     
     # Con el cascade nos aseguramos de que cuando borremos una store, sus items también se eliminen.
     items = db.relationship("ItemModel", back_populates="store", lazy="dynamic", cascade="all, delete")
+    
+    tags = db.relationship("TagModel", back_populates="store", lazy="dynamic")
