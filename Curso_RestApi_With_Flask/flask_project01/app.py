@@ -3,6 +3,7 @@ import secrets # se puede usar para generar una llave para el token random.
 from flask import Flask, jsonify
 from flask_smorest import Api
 from flask_jwt_extended import JWTManager
+from flask_migrate import Migrate
 
 from db import db
 from blocklist import BLOCKLIST
@@ -26,15 +27,17 @@ def create_app(db_url=None):
     app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url or os.getenv("DABASE_URL", "sqlite:///data.db") # crea un archivo data.db
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    
+    
     db.init_app(app) # inicializa la extension SQL alchemy de flask recibiendo nuestra app.
-
-
+    migrate = Migrate(app, db) # flask-migrate ayuda a crear las tablas para la base de datos.
     api = Api(app)
     
     # una buena forma de generar el secret key app.config["JWT_SECRET_KEY"] = secrets.SystemRandom().getrandbits(128) < el problema es que se cambiara siempre, es mejor generarla y guardarla. 
     app.config["JWT_SECRET_KEY"] = "Dairan" # set secret key (is used for signing JWT). Mejor guardar en un ENV
     jwt = JWTManager(app)
     
+
     
     # al usuario hacer logout, su token se almacena en el blocklist y es inválido para ingresar como el usuario ( debe crear otro JWT).
     @jwt.token_in_blocklist_loader
@@ -49,6 +52,19 @@ def create_app(db_url=None):
                 {
                     "description": "The token has been revoked.",
                     "error": "token_revoked"
+                }
+            ),
+            401,
+        )
+    
+    
+    @jwt.needs_fresh_token_loader
+    def token_not_fresh_callback(jwt_header, jwt_payload):
+        return (
+            jsonify (
+                {
+                    "description": "The token is not fresh.",
+                    "error": "fresh_token_required"
                 }
             ),
             401,
@@ -95,9 +111,9 @@ def create_app(db_url=None):
         
     
     
-    
-    with app.app_context(): # esto se ejecuta al hacer un primer request, esto crea todas las tablas en la base de datos.
-        db.create_all() # si existen tablas, no se ejecuta. (crea el daba.db en el directorio instance)
+    # esto no es necesario ya con SQLAlchemy por que Flask-Migrate crea las tablas de nuestra base de datos.
+    # with app.app_context(): # esto se ejecuta al hacer un primer request, esto crea todas las tablas en la base de datos.
+    #     db.create_all() # si existen tablas, no se ejecuta. (crea el daba.db en el directorio instance)
 
     api.register_blueprint(ItemBlueprint)
     api.register_blueprint(StoreBlueprint)
