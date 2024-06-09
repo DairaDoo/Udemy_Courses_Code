@@ -5,6 +5,7 @@ from flask_smorest import Api
 from flask_jwt_extended import JWTManager
 from flask_migrate import Migrate
 
+# importamos la base de datos db ( que es SQLAlchemy )
 from db import db
 from blocklist import BLOCKLIST
 import models
